@@ -2,14 +2,15 @@ import { useEffect, useState } from "react";
 import Card from "./components/Card";
 import { shuffle } from "./utils/shuffle";
 import calculateScore from "./utils/calculateScore";
-
+import { themes } from "./utils/themes";
+import fireConfetti from "./utils/win";
 // Symbol data
 const symbols = [
   '🐶', '🐱', '🐵', '🐸', '🦄', '🐼', '🐯', '🐷', '🦊', '🐨', '🦄', '🦜', 
   '🐺', '🐯', '🦉', '🐸', '🐍', '🐆'
 ];
 
-const useGame = (difficulty) => {
+const useGame = (difficulty, theme) => {
   const [cards, setCards] = useState([]);
   const [flipped, setFlipped] = useState([]);
   const [matched, setMatched] = useState([]);
@@ -18,6 +19,14 @@ const useGame = (difficulty) => {
   const [isGameActive, setIsGameActive] = useState(false);
   const [hasFlippedFirstCard, setHasFlippedFirstCard] = useState(false);
   const [audio] = useState(new Audio());
+  const [bestScore, setBestScore] = useState(null);
+
+  // Function to get the emoji set based on the selected theme
+  const getThemeEmojis = () => {
+    return themes[theme] || themes['animals']; // Default to 'animals' theme if not found
+  };
+
+  const themeEmojis = getThemeEmojis();  // Ensure theme emojis are recalculated every time theme changes
 
   const getGridSize = () => {
     switch (difficulty) {
@@ -32,8 +41,8 @@ const useGame = (difficulty) => {
     const gridSize = getGridSize();
     const totalPairs = (gridSize * gridSize) / 2;
     const newSymbols = shuffle([
-      ...symbols.slice(0, totalPairs),
-      ...symbols.slice(0, totalPairs),
+      ...themeEmojis.slice(0, totalPairs),
+      ...themeEmojis.slice(0, totalPairs),
     ]);
     setCards(newSymbols.map((symbol, i) => ({ id: i, symbol })));
     setFlipped([]);
@@ -82,6 +91,7 @@ const useGame = (difficulty) => {
       setIsGameActive(false);
       audio.src = "/music/win.mp3";
       audio.play();
+      fireConfetti();
       const currentScore = calculateScore(timer, tries, difficulty);
       localStorage.setItem("bestScore", currentScore.toFixed(2));
     }
@@ -90,8 +100,13 @@ const useGame = (difficulty) => {
   };
 
   useEffect(() => {
+    const score = localStorage.getItem("bestScore");
+    if (score) setBestScore(score);
+  }, []);
+
+  useEffect(() => {
     resetGame();
-  }, [difficulty]);
+  }, [difficulty, theme]); // Reset the game whenever difficulty or theme changes
 
   useEffect(updateTimer, [matched, isGameActive, hasFlippedFirstCard, timer, tries]);
 
@@ -105,12 +120,15 @@ const useGame = (difficulty) => {
     handleFlip,
     resetGame,
     getGridSize,
+    bestScore,
+    theme
   };
 };
 
 const App = () => {
   const [difficulty, setDifficulty] = useState("easy");
-  const { cards, flipped, matched, tries, timer, handleFlip, resetGame, getGridSize } = useGame(difficulty);
+  const [theme, setTheme] = useState("animals"); // Define the theme state here
+  const { cards, flipped, matched, tries, timer, handleFlip, resetGame, getGridSize, bestScore } = useGame(difficulty, theme);
 
   const getCardSize = () => {
     switch (difficulty) {
@@ -139,7 +157,20 @@ const App = () => {
           <option value="medium">Medium (4x4)</option>
           <option value="hard">Hard (6x6)</option>
         </select>
-  
+        <label htmlFor="theme" className="text-lg font-medium">Theme:</label>
+        <select
+          id="theme"
+          value={theme}
+          onChange={(e) => setTheme(e.target.value)} // Now works because setTheme is defined
+          className="px-4 py-2 rounded-lg bg-gray-800 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-600"
+        >
+          {Object.keys(themes).map((themeKey) => (
+            <option key={themeKey} value={themeKey}>
+              {themeKey.charAt(0).toUpperCase() + themeKey.slice(1)}
+            </option>
+          ))}
+        </select>
+
         <button
           className="bg-purple-700 hover:bg-purple-800 px-6 py-2 rounded-lg font-semibold shadow-md transition duration-200"
           onClick={resetGame}
@@ -151,9 +182,15 @@ const App = () => {
       <div className="text-lg sm:text-xl space-y-1 mb-6 text-center">
         <div>🧪 Tries: <span className="font-bold">{tries}</span></div>
         <div>⏱️ Time: <span className="font-bold">{timer.toFixed(2)}s</span></div>
+        {bestScore && (
+          <div className="text-yellow-400 font-bold text-lg">
+            🏆 Best Score: {bestScore} Points
+          </div>
+        )}
+
         {matched.length === cards.length / 2 && (
           <div className="text-green-400 font-bold text-xl">
-            🎉 Score: {(timer / tries).toFixed(2)}s
+            🎉 Score: {(timer / tries).toFixed(2)} Points
           </div>
         )}
       </div>
@@ -167,8 +204,9 @@ const App = () => {
             key={card.id}
             symbol={card.symbol}
             isFlipped={flipped.includes(idx) || matched.includes(card.symbol)}
+            isMatched={matched.includes(card.symbol)}
             onClick={() => handleFlip(idx)}
-            cardSize={getCardSize()}  // Pass dynamic card size based on difficulty
+            cardSize={getCardSize()}
           />
         ))}
       </div>
