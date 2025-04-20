@@ -77,7 +77,7 @@ The goal of the game is to match all pairs of cards with the least number of tri
 
    ```bash
    git clone https://github.com/chinmayyyyyy/Memory-Game.git
-   cd memory-match-game
+   cd Memory-Game
    ```
 
 2. **Install Dependencies**:
