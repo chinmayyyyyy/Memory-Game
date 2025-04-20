@@ -4,11 +4,6 @@ import { shuffle } from "./utils/shuffle";
 import calculateScore from "./utils/calculateScore";
 import { themes } from "./utils/themes";
 import fireConfetti from "./utils/win";
-// Symbol data
-const symbols = [
-  '🐶', '🐱', '🐵', '🐸', '🦄', '🐼', '🐯', '🐷', '🦊', '🐨', '🦄', '🦜', 
-  '🐺', '🐯', '🦉', '🐸', '🐍', '🐆'
-];
 
 const useGame = (difficulty, theme) => {
   const [cards, setCards] = useState([]);
@@ -21,13 +16,11 @@ const useGame = (difficulty, theme) => {
   const [audio] = useState(new Audio());
   const [bestScore, setBestScore] = useState(null);
 
-  // Function to get the emoji set based on the selected theme
   const getThemeEmojis = () => {
-    return themes[theme] || themes['animals']; // Default to 'animals' theme if not found
+    return themes[theme] || themes['animals']; 
   };
 
-  const themeEmojis = getThemeEmojis();  // Ensure theme emojis are recalculated every time theme changes
-
+  const themeEmojis = getThemeEmojis(); 
   const getGridSize = () => {
     switch (difficulty) {
       case "easy": return 2;
@@ -106,8 +99,7 @@ const useGame = (difficulty, theme) => {
 
   useEffect(() => {
     resetGame();
-  }, [difficulty, theme]); // Reset the game whenever difficulty or theme changes
-
+  }, [difficulty, theme]); 
   useEffect(updateTimer, [matched, isGameActive, hasFlippedFirstCard, timer, tries]);
 
   return {
@@ -127,7 +119,7 @@ const useGame = (difficulty, theme) => {
 
 const App = () => {
   const [difficulty, setDifficulty] = useState("easy");
-  const [theme, setTheme] = useState("animals"); // Define the theme state here
+  const [theme, setTheme] = useState("animals");
   const { cards, flipped, matched, tries, timer, handleFlip, resetGame, getGridSize, bestScore } = useGame(difficulty, theme);
 
   const getCardSize = () => {
@@ -161,7 +153,7 @@ const App = () => {
         <select
           id="theme"
           value={theme}
-          onChange={(e) => setTheme(e.target.value)} // Now works because setTheme is defined
+          onChange={(e) => setTheme(e.target.value)} 
           className="px-4 py-2 rounded-lg bg-gray-800 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-600"
         >
           {Object.keys(themes).map((themeKey) => (
